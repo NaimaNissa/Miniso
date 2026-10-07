@@ -26,17 +26,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [ready, user, isLogin, pathname, router]);
 
-  // Login is public — always render so the route never drops.
+  // Always keep login page HTML stable (redirect only via effect).
   if (isLogin) {
-    if (ready && user) {
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-[var(--background)]">
-          <p className="text-sm text-[var(--text-muted)]">
-            Opening your workspace…
-          </p>
-        </div>
-      );
-    }
     return <>{children}</>;
   }
 

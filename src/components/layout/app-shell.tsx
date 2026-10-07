@@ -3,6 +3,7 @@
 import { useApp } from "@/components/providers";
 import { AuthGuard } from "@/components/auth-guard";
 import { cn } from "@/lib/utils";
+import { useMounted } from "@/lib/use-mounted";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 import { CommandPalette } from "./command-palette";
@@ -13,10 +14,19 @@ import { usePathname } from "next/navigation";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { sidebarCollapsed } = useApp();
   const pathname = usePathname() ?? "";
+  const mounted = useMounted();
   const isLogin = pathname === "/login";
   const isPOS = pathname.startsWith("/pos");
 
-  // Stable shell tree — login/POS only hide chrome, never remount providers.
+  // SSR + first client paint: same minimal tree (avoids React #418).
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[var(--background)]" suppressHydrationWarning>
+        {isLogin || pathname === "/" ? children : null}
+      </div>
+    );
+  }
+
   return (
     <AuthGuard>
       {isLogin ? (

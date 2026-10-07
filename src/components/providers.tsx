@@ -37,6 +37,7 @@ const AppContext = createContext<AppContextValue | null>(null);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
+  const [themeReady, setThemeReady] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -49,17 +50,28 @@ export function Providers({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    const stored = localStorage.getItem("miniso-theme") as Theme | null;
-    if (stored) setTheme(stored);
-    else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
+    try {
+      const stored = localStorage.getItem("miniso-theme") as Theme | null;
+      if (stored === "light" || stored === "dark") {
+        setTheme(stored);
+      } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        setTheme("dark");
+      }
+    } catch {
+      // ignore
     }
+    setThemeReady(true);
   }, []);
 
   useEffect(() => {
+    if (!themeReady) return;
     document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("miniso-theme", theme);
-  }, [theme]);
+    try {
+      localStorage.setItem("miniso-theme", theme);
+    } catch {
+      // ignore
+    }
+  }, [theme, themeReady]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
