@@ -14,7 +14,6 @@ import {
   Menu,
   Moon,
   Search,
-  Sparkles,
   Sun,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -26,7 +25,6 @@ export function Topbar() {
     scope,
     setScope,
     setCommandOpen,
-    setAiOpen,
     notificationsOpen,
     setNotificationsOpen,
     sidebarCollapsed,
@@ -169,15 +167,6 @@ export function Topbar() {
             </div>
           )}
         </div>
-
-        <button
-          onClick={() => setAiOpen(true)}
-          className="hidden h-9 w-9 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)] transition-colors hover:bg-[var(--accent-soft-strong)] md:inline-flex md:h-10 md:w-auto md:gap-2 md:px-3"
-          aria-label="Ask AI"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="hidden text-sm font-medium lg:inline">Ask AI</span>
-        </button>
 
         <button
           onClick={() => setNotificationsOpen(!notificationsOpen)}
