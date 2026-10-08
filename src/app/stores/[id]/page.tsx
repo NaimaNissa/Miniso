@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { stores, storeOperations } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { formatCurrency } from "@/lib/utils";
 import { GlassCard, SurfaceCard } from "@/components/ui/glass-card";
 import { Pill } from "@/components/ui/status-badge";
@@ -15,7 +15,9 @@ export default function StoreDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { stores, storeOperations, ready } = useRetail();
   const store = stores.find((s) => s.id === id);
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
   if (!store) {
     return (
       <div className="py-20 text-center">

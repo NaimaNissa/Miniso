@@ -42,34 +42,36 @@ export function KPICard({
     <GlassCard
       hover
       className={cn(
-        "animate-fade-in",
-        compact ? "p-3.5" : "p-4",
-        accent && "ring-1 ring-[var(--accent-soft)]"
+        "h-full animate-fade-in",
+        compact ? "p-4" : "p-5",
+        accent && "ring-1 ring-[var(--accent)]/20"
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-xs font-medium text-[var(--text-secondary)]">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
           {label}
         </p>
         {Icon && (
-          <Icon className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
+            <Icon className="h-3.5 w-3.5" />
+          </span>
         )}
       </div>
       <p
         className={cn(
-          "mt-2 font-semibold tracking-tight text-[var(--text-primary)]",
-          compact ? "text-xl" : "text-2xl"
+          "mt-3 font-semibold tracking-tight text-[var(--text-primary)]",
+          compact ? "text-[1.35rem] sm:text-xl" : "text-2xl"
         )}
       >
         {display}
         {suffix && (
-          <span className="ml-1 text-sm font-medium text-[var(--text-muted)]">
+          <span className="ml-1 text-xs font-medium text-[var(--text-muted)] sm:text-sm">
             {suffix}
           </span>
         )}
       </p>
       {change !== undefined && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-[11px]">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
           <span
             className={cn(
               "inline-flex items-center gap-0.5 font-medium",
@@ -86,18 +88,18 @@ export function KPICard({
           <span className="text-[var(--text-muted)]">{changeLabel}</span>
         </div>
       )}
-      {sparkline && sparkline.length > 0 && !compact && (
-        <div className="mt-3 flex h-6 items-end gap-0.5">
+      {sparkline && sparkline.length > 0 && (
+        <div className="mt-4 flex h-7 items-end gap-0.5">
           {sparkline.map((v, i) => {
-            const max = Math.max(...sparkline);
-            const h = Math.max(10, (v / max) * 100);
+            const max = Math.max(...sparkline, 1);
+            const h = Math.max(12, (v / max) * 100);
             return (
               <div
                 key={i}
-                className="flex-1 rounded-sm bg-[var(--accent-soft)]"
+                className="flex-1 rounded-sm bg-[var(--accent)]/25"
                 style={{
                   height: `${h}%`,
-                  opacity: 0.4 + (i / sparkline.length) * 0.6,
+                  opacity: 0.35 + (i / sparkline.length) * 0.65,
                 }}
               />
             );

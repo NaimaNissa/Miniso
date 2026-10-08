@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { posCatalog } from "@/lib/data";
+import { useAuth } from "@/components/auth-provider";
+import { useRetail } from "@/components/retail-provider";
+import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,8 +25,12 @@ type CartItem = {
 };
 
 export default function POSPage() {
+  const { user, token } = useAuth();
+  const { posCatalog, branchToday, ready, reload } = useRetail();
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [message, setMessage] = useState("");
+  const [paying, setPaying] = useState(false);
 
   const catalog = useMemo(
     () =>
@@ -33,7 +39,7 @@ export default function POSPage() {
           p.name.toLowerCase().includes(query.toLowerCase()) ||
           p.sku.toLowerCase().includes(query.toLowerCase())
       ),
-    [query]
+    [posCatalog, query]
   );
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
@@ -41,9 +47,15 @@ export default function POSPage() {
   function addToCart(p: (typeof posCatalog)[0]) {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === p.id);
+      const nextQty = (existing?.qty ?? 0) + 1;
+      if (p.available < nextQty) {
+        setMessage(`Only ${p.available} ${p.name} left at this branch`);
+        return prev;
+      }
+      setMessage("");
       if (existing) {
         return prev.map((i) =>
-          i.id === p.id ? { ...i, qty: i.qty + 1 } : i
+          i.id === p.id ? { ...i, qty: nextQty } : i
         );
       }
       return [
@@ -61,6 +73,30 @@ export default function POSPage() {
     );
   }
 
+  async function pay(tender: "cash" | "card") {
+    if (!token || cart.length === 0) return;
+    setPaying(true);
+    setMessage("");
+    try {
+      const sale = await api.checkout(token, {
+        storeId: branchToday.storeId,
+        tender,
+        lines: cart.map((item) => ({ productId: item.id, qty: item.qty })),
+      });
+      setCart([]);
+      setMessage(`Sale ${sale.id} posted · stock updated`);
+      await reload();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Payment failed");
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  if (!ready) {
+    return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[var(--background)]">
       <header className="flex h-14 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-4">
@@ -72,9 +108,9 @@ export default function POSPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <p className="text-sm font-semibold">POS · Dhanmondi Store</p>
+            <p className="text-sm font-semibold">POS · {branchToday.storeName}</p>
             <p className="text-[11px] text-[var(--text-muted)]">
-              Shift open · Cashier: Rafi
+              {user?.name ?? "Cashier"} · {message || "Stock updates when you take payment"}
             </p>
           </div>
         </div>
@@ -112,6 +148,9 @@ export default function POSPage() {
                 <span className="text-3xl">{p.image}</span>
                 <p className="mt-3 line-clamp-2 text-sm font-medium">
                   {p.name}
+                </p>
+                <p className="text-[11px] text-[var(--text-muted)]">
+                  {p.available > 0 ? `${p.available} in branch` : "Out at this branch"}
                 </p>
                 <p className="mt-auto pt-2 text-base font-semibold text-[var(--accent)]">
                   {formatCurrency(p.price)}
@@ -200,17 +239,17 @@ export default function POSPage() {
               <Button
                 size="lg"
                 variant="secondary"
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || paying}
                 className="h-14 text-base"
-                onClick={() => setCart([])}
+                onClick={() => pay("cash")}
               >
                 Cash
               </Button>
               <Button
                 size="lg"
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || paying}
                 className="h-14 text-base"
-                onClick={() => setCart([])}
+                onClick={() => pay("card")}
               >
                 Card
               </Button>

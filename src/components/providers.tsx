@@ -20,6 +20,7 @@ type Scope = {
 
 type AppContextValue = {
   theme: Theme;
+  setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   scope: Scope;
   setScope: (scope: Partial<Scope>) => void;
@@ -31,6 +32,8 @@ type AppContextValue = {
   setNotificationsOpen: (open: boolean) => void;
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (v: boolean) => void;
+  mobileNavOpen: boolean;
+  setMobileNavOpen: (v: boolean) => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -42,6 +45,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [aiOpen, setAiOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [scope, setScopeState] = useState<Scope>({
     countryId: "bd",
     countryName: "Bangladesh",
@@ -88,6 +92,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const setThemeChoice = useCallback((next: Theme) => {
+    setTheme(next);
+  }, []);
+
   const toggleTheme = useCallback(() => {
     setTheme((t) => (t === "light" ? "dark" : "light"));
   }, []);
@@ -99,6 +107,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       theme,
+      setTheme: setThemeChoice,
       toggleTheme,
       scope,
       setScope,
@@ -110,9 +119,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       setNotificationsOpen,
       sidebarCollapsed,
       setSidebarCollapsed,
+      mobileNavOpen,
+      setMobileNavOpen,
     }),
     [
       theme,
+      setThemeChoice,
       toggleTheme,
       scope,
       setScope,
@@ -120,6 +132,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       aiOpen,
       notificationsOpen,
       sidebarCollapsed,
+      mobileNavOpen,
     ]
   );
 

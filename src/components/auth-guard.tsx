@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
-import { roleMeta } from "@/lib/auth";
+import { isAuthPage, roleMeta } from "@/lib/auth";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
@@ -13,7 +13,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, ready, canAccessPath, modules } = useAuth();
   const pathname = usePathname() ?? "";
   const router = useRouter();
-  const isLogin = pathname === "/login";
+  const isLogin = isAuthPage(pathname);
 
   useEffect(() => {
     if (!ready) return;

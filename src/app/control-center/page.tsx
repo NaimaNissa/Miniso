@@ -1,11 +1,15 @@
+"use client";
+
 import { PageHeader } from "@/components/ui/page-header";
 import { GlassCard, SurfaceCard } from "@/components/ui/glass-card";
 import { Pill } from "@/components/ui/status-badge";
-import { networkStats, stores, warehouses } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 
 export default function ControlCenterPage() {
+  const { networkStats, stores, warehouses, ready } = useRetail();
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
   return (
     <div className="animate-fade-in">
       <PageHeader

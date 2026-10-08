@@ -1,13 +1,14 @@
 "use client";
 
 import { useApp } from "@/components/providers";
-import { products, stores, warehouses, purchaseOrders } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { Search, Package, Store, Warehouse, FileText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export function CommandPalette() {
   const { commandOpen, setCommandOpen } = useApp();
+  const { products, stores, warehouses, purchaseOrders } = useRetail();
   const [query, setQuery] = useState("");
   const router = useRouter();
 
@@ -81,7 +82,7 @@ export function CommandPalette() {
           icon: FileText,
         })),
     ].slice(0, 8);
-  }, [query]);
+  }, [products, purchaseOrders, query, stores, warehouses]);
 
   if (!commandOpen) return null;
 

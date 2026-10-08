@@ -5,14 +5,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { GlassCard, SurfaceCard } from "@/components/ui/glass-card";
 import { StatusBadge, Pill } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
-import { products, stores } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { formatCurrency } from "@/lib/utils";
 import { Copy, Search } from "lucide-react";
 
 export default function ProductLookupPage() {
+  const { products, stores, inventoryRows, promotions, ready } = useRetail();
   const [query, setQuery] = useState("Sanrio");
   const [copied, setCopied] = useState(false);
-
   const product = useMemo(() => {
     const q = query.toLowerCase().trim();
     if (!q) return products[0];
@@ -24,16 +24,18 @@ export default function ProductLookupPage() {
           p.category.toLowerCase().includes(q)
       ) ?? null
     );
-  }, [query]);
+  }, [products, query]);
 
-  const stockByStore = stores.map((s, i) => ({
-    store: s.name,
-    qty: product
-      ? product.inventoryStatus === "out"
-        ? 0
-        : [8, 42, 11, 6][i] ?? 10
-      : 0,
+  const stockByStore = stores.map((store) => ({
+    store: store.name,
+    qty:
+      inventoryRows.find(
+        (row) => row.productId === product?.id && row.storeId === store.id
+      )?.stock ?? 0,
   }));
+  const offer = promotions.find(
+    (promo) => promo.status === "Active" && promo.category === product?.category
+  );
 
   const reply = product
     ? `Hi! ${product.name} (${product.sku}) is ৳${product.price.toLocaleString()}. ${
@@ -43,7 +45,7 @@ export default function ProductLookupPage() {
               .map((s) => `${s.store} (${s.qty})`)
               .join(", ")}.`
           : "Currently out of stock — next inbound ETA available on request."
-      } Gold members get 1.5× points on Toys & IP this week.`
+      } ${offer?.note || "Ask the branch about current offers."}`
     : "";
 
   function copyReply() {
@@ -51,6 +53,8 @@ export default function ProductLookupPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }
+
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
 
   return (
     <div className="animate-fade-in">
@@ -125,7 +129,7 @@ export default function ProductLookupPage() {
                 Active offer
               </p>
               <p className="mt-1 text-sm">
-                1.5× Gold points on Toys & IP this week
+                {offer?.note || "No category offer is active right now."}
               </p>
             </GlassCard>
           </SurfaceCard>

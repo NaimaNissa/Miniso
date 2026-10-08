@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
-import { demoUsers, getModulesForRole, roleMeta } from "@/lib/auth";
+import { demoUsersByLane, getModulesForRole, roleMeta } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { GlassCard, SurfaceCard } from "@/components/ui/glass-card";
 import { Pill } from "@/components/ui/status-badge";
-import { Eye, EyeOff, Lock, Mail, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ArrowRight, UserPlus } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -19,20 +20,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [activeDemo, setActiveDemo] = useState<string | null>(null);
 
-  function completeLogin(userEmail: string, userPassword: string) {
+  async function completeLogin(userEmail: string, userPassword: string) {
     setError("");
     setLoading(true);
-    const result = login(userEmail, userPassword);
+    const result = await login(userEmail, userPassword);
     setLoading(false);
     if (!result.ok) {
       setError(result.error);
       setActiveDemo(null);
       return;
     }
-    const user = demoUsers.find(
-      (u) => u.email === userEmail.trim().toLowerCase()
-    );
-    router.replace(user ? roleMeta[user.role].home : "/home");
+    router.replace(result.home);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -144,6 +142,17 @@ export default function LoginPage() {
               {loading ? "Signing in…" : "Sign in"}
             </Button>
           </form>
+          <p className="mt-4 text-center text-xs text-[var(--text-muted)]">
+            Got an HQ invite? Open the link in your email to join your role
+            dashboard. Walk-up floor staff can still self-register.
+          </p>
+          <Link
+            href="/staff/signup"
+            className="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-[var(--accent)]"
+          >
+            <UserPlus className="h-4 w-4" />
+            Staff portal — create an employee account
+          </Link>
         </GlassCard>
       </section>
 
@@ -155,67 +164,76 @@ export default function LoginPage() {
           <h2 className="mt-1 text-xl font-semibold tracking-tight">
             Demo accounts
           </h2>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            One-click login for each user — email and password shown on the
-            card.
+          <p className="mt-1 text-sm text-[var(--text-secondary)]" suppressHydrationWarning>
+            HQ owns every branch. Each branch has its own manager, cashiers, and
+            floor staff - same shared records.
           </p>
         </div>
 
-        <div className="grid flex-1 gap-3 content-start sm:grid-cols-2">
-          {demoUsers.map((u) => {
-            const modules = getModulesForRole(u.role);
-            const meta = roleMeta[u.role];
-            const busy = loading && activeDemo === u.id;
-            return (
-              <SurfaceCard
-                key={u.id}
-                className="flex h-full flex-col p-4 transition-shadow hover:shadow-[var(--shadow-md)]"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-xs font-semibold text-[var(--accent)]">
-                    {u.initials}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold text-[var(--text-primary)]">
-                        {u.name}
+        <div className="flex flex-1 flex-col gap-6">
+          {demoUsersByLane().map((lane) => (
+            <div key={lane.label}>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                {lane.label}
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {lane.users.map((u) => {
+                  const modules = getModulesForRole(u.role);
+                  const meta = roleMeta[u.role];
+                  const busy = loading && activeDemo === u.id;
+                  return (
+                    <SurfaceCard
+                      key={u.id}
+                      className="flex h-full flex-col p-4 transition-shadow hover:shadow-[var(--shadow-md)]"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-xs font-semibold text-[var(--accent)]">
+                          {u.initials}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-[var(--text-primary)]">
+                              {u.name}
+                            </p>
+                            <Pill tone="accent">{meta.shortLabel}</Pill>
+                          </div>
+                          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                            {u.title} · {u.workspace}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 space-y-1.5 rounded-[var(--radius-md)] bg-[var(--background-elevated)] px-3 py-2.5 font-mono text-[11px]">
+                        <p className="text-[var(--text-secondary)]">
+                          <span className="text-[var(--text-muted)]">email </span>
+                          {u.email}
+                        </p>
+                        <p className="text-[var(--text-secondary)]">
+                          <span className="text-[var(--text-muted)]">pass </span>
+                          {u.password}
+                        </p>
+                      </div>
+
+                      <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                        {modules.length} modules · {meta.description}
                       </p>
-                      <Pill tone="accent">{meta.shortLabel}</Pill>
-                    </div>
-                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                      {u.title} · {u.workspace}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="mt-3 space-y-1.5 rounded-[var(--radius-md)] bg-[var(--background-elevated)] px-3 py-2.5 font-mono text-[11px]">
-                  <p className="text-[var(--text-secondary)]">
-                    <span className="text-[var(--text-muted)]">email </span>
-                    {u.email}
-                  </p>
-                  <p className="text-[var(--text-secondary)]">
-                    <span className="text-[var(--text-muted)]">pass </span>
-                    {u.password}
-                  </p>
-                </div>
-
-                <p className="mt-2 text-[11px] text-[var(--text-muted)]">
-                  {modules.length} modules · {meta.description}
-                </p>
-
-                <Button
-                  type="button"
-                  className="mt-3 w-full"
-                  size="sm"
-                  disabled={loading}
-                  onClick={() => demoLogin(u.email, u.password, u.id)}
-                >
-                  {busy ? "Signing in…" : "Demo login"}
-                  {!busy && <ArrowRight className="h-3.5 w-3.5" />}
-                </Button>
-              </SurfaceCard>
-            );
-          })}
+                      <Button
+                        type="button"
+                        className="mt-3 w-full"
+                        size="sm"
+                        disabled={loading}
+                        onClick={() => demoLogin(u.email, u.password, u.id)}
+                      >
+                        {busy ? "Signing in…" : "Demo login"}
+                        {!busy && <ArrowRight className="h-3.5 w-3.5" />}
+                      </Button>
+                    </SurfaceCard>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     </div>

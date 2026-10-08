@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { GlassCard, SurfaceCard } from "@/components/ui/glass-card";
 import { Pill } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
-import { warehouseTasks, warehouses } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { ScanBarcode } from "lucide-react";
 
 const workflows = [
@@ -36,6 +36,8 @@ const statusLabel = {
 };
 
 export default function WarehousePage() {
+  const { warehouseTasks, warehouses, ready } = useRetail();
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
   return (
     <div className="animate-fade-in">
       <PageHeader
@@ -132,8 +134,8 @@ export default function WarehousePage() {
                     </Pill>
                   </td>
                   <td className="px-5 py-3.5">
-                    <Pill tone={statusTone[t.status]}>
-                      {statusLabel[t.status]}
+                    <Pill tone={statusTone[t.status as keyof typeof statusTone]}>
+                      {statusLabel[t.status as keyof typeof statusLabel]}
                     </Pill>
                   </td>
                 </tr>

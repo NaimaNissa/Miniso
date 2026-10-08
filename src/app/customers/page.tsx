@@ -7,7 +7,7 @@ import { GlassCard, SurfaceCard } from "@/components/ui/glass-card";
 import { Pill } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { SideDrawer } from "@/components/ui/side-drawer";
-import { customers } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { formatCurrency } from "@/lib/utils";
 
 const tierTone = {
@@ -17,7 +17,9 @@ const tierTone = {
 };
 
 export default function CustomersPage() {
+  const { customers, ready } = useRetail();
   const [selected, setSelected] = useState<(typeof customers)[0] | null>(null);
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
 
   return (
     <div className="animate-fade-in">

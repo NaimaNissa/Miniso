@@ -5,13 +5,15 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SurfaceCard } from "@/components/ui/glass-card";
 import { StatusBadge, Pill } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
-import { products } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { useState } from "react";
 
 export default function ProductsPage() {
+  const { products, ready } = useRetail();
   const [query, setQuery] = useState("");
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
   const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(query.toLowerCase()) ||

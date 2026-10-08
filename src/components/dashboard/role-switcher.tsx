@@ -10,14 +10,14 @@ const roles = [
     id: "owner",
     href: "/dashboard/owner",
     label: "Owner",
-    description: "Network management",
+    description: "Network",
     icon: Building2,
   },
   {
     id: "branch",
     href: "/dashboard/branch",
     label: "Branch",
-    description: "Store operations",
+    description: "Stores",
     icon: Store,
   },
 ];
@@ -28,27 +28,31 @@ export function RoleSwitcher({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-1",
+        "inline-flex w-full items-center gap-0.5 rounded-full border border-[var(--border)] bg-[var(--background-elevated)] p-1 sm:w-auto",
         className
       )}
+      role="tablist"
+      aria-label="Dashboard view"
     >
       {roles.map((role) => {
-        const active = pathname.startsWith(role.href);
+        const active = pathname?.startsWith(role.href);
         const Icon = role.icon;
         return (
           <Link
             key={role.id}
             href={role.href}
+            role="tab"
+            aria-selected={active}
             className={cn(
-              "inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-3 py-1.5 text-sm font-medium transition-all duration-150",
+              "inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-150 sm:flex-none",
               active
-                ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                ? "bg-[var(--surface)] text-[var(--accent)] shadow-[var(--shadow-sm)]"
                 : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             )}
           >
             <Icon className="h-3.5 w-3.5" />
             <span>{role.label}</span>
-            <span className="hidden text-[11px] font-normal text-[var(--text-muted)] sm:inline">
+            <span className="hidden text-[11px] font-normal text-[var(--text-muted)] md:inline">
               {role.description}
             </span>
           </Link>

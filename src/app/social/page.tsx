@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { GlassCard, SurfaceCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/ui/status-badge";
-import { conversations, socialMessages, branchToday } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
 
@@ -14,11 +14,24 @@ const channels = ["All", "Instagram", "WhatsApp", "Facebook", "Other"];
 
 export default function SocialPage() {
   const { user } = useAuth();
+  const { ready, conversations, socialMessages, branchToday } = useRetail();
   const [channel, setChannel] = useState("All");
-  const [activeId, setActiveId] = useState(conversations[0].id);
-  const active = conversations.find((c) => c.id === activeId)!;
+  const [activeId, setActiveId] = useState("");
+  const active =
+    conversations.find((c) => c.id === activeId) ?? conversations[0];
   const isBranchScoped =
     user?.role === "store_manager" || user?.role === "social_media";
+
+  if (!ready) {
+    return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
+  }
+  if (!active) {
+    return (
+      <div className="py-16 text-center text-sm text-[var(--text-muted)]">
+        No conversations for this branch yet.
+      </div>
+    );
+  }
 
   const filtered =
     channel === "All"

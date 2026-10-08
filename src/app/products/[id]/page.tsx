@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { products, stores } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { SurfaceCard, GlassCard } from "@/components/ui/glass-card";
 import { Pill, StatusBadge } from "@/components/ui/status-badge";
@@ -16,8 +16,10 @@ export default function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { products, stores, ready } = useRetail();
   const product = products.find((p) => p.id === id);
   const [tab, setTab] = useState("overview");
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
 
   if (!product) {
     return (

@@ -8,51 +8,24 @@ import { Pill } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { SideDrawer } from "@/components/ui/side-drawer";
 import { useAuth } from "@/components/auth-provider";
-
-const transfers = [
-  {
-    id: "TR-DHK-229",
-    from: "Dhaka DC",
-    to: "Dhanmondi Store",
-    sku: "SKU-2048",
-    qty: 24,
-    status: "In Transit",
-  },
-  {
-    id: "TR-UTT-118",
-    from: "Dhaka DC",
-    to: "Uttara Store",
-    sku: "SKU-1102",
-    qty: 40,
-    status: "Completed",
-  },
-];
-
-const adjustments = [
-  {
-    id: "ADJ-441",
-    sku: "SKU-8891",
-    reason: "Damage",
-    qty: -6,
-    status: "Pending approval",
-  },
-  {
-    id: "ADJ-438",
-    sku: "SKU-301",
-    reason: "Recount",
-    qty: +2,
-    status: "Posted",
-  },
-];
+import { useRetail } from "@/components/retail-provider";
+import { api } from "@/lib/api";
 
 export default function TransfersPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const { transfers, adjustments, stores, ready, reload } = useRetail();
   const [tab, setTab] = useState("transfer");
   const [open, setOpen] = useState(false);
+  const [sku, setSku] = useState("SKU-2048");
+  const [qty, setQty] = useState("12");
+  const [reason, setReason] = useState("Recount");
+  const [toStoreId, setToStoreId] = useState("MIN-BD-DHK-014");
+  const [formError, setFormError] = useState("");
   const needsApprovalNote =
     user?.role === "warehouse_staff"
       ? "Large adjustments require Inventory Manager approval."
       : "Large adjustments create an approval request and audit event.";
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
 
   return (
     <div className="animate-fade-in">
@@ -71,7 +44,7 @@ export default function TransfersPage() {
         onChange={setTab}
         tabs={[
           { id: "transfer", label: "Transfers" },
-          { id: "adjust", label: "Adjustments", count: 1 },
+          { id: "adjust", label: "Adjustments", count: adjustments.length },
         ]}
       />
 
@@ -106,11 +79,23 @@ export default function TransfersPage() {
                   <td className="px-3 py-3.5">{t.sku}</td>
                   <td className="px-3 py-3.5">{t.qty}</td>
                   <td className="px-5 py-3.5">
-                    <Pill
-                      tone={t.status === "Completed" ? "success" : "info"}
-                    >
-                      {t.status}
-                    </Pill>
+                    <div className="flex items-center gap-2">
+                      <Pill tone={t.status === "Completed" ? "success" : "info"}>
+                        {t.status}
+                      </Pill>
+                      {t.status === "In Transit" && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            if (!token) return;
+                            void api.receiveTransfer(token, t.id).then(() => reload());
+                          }}
+                        >
+                          Receive
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -162,36 +147,79 @@ export default function TransfersPage() {
             <Button variant="outline" className="flex-1" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button className="flex-1" onClick={() => setOpen(false)}>
+            <Button
+              className="flex-1"
+              onClick={() => {
+                if (!token) return;
+                setFormError("");
+                const action =
+                  tab === "transfer"
+                    ? api.createTransfer(token, {
+                        toStoreId,
+                        sku,
+                        qty: Number(qty),
+                      })
+                    : api.createAdjustment(token, {
+                        sku,
+                        qty: Number(qty),
+                        reason,
+                      });
+                void action
+                  .then(() => {
+                    setOpen(false);
+                    return reload();
+                  })
+                  .catch((error: Error) => setFormError(error.message));
+              }}
+            >
               {tab === "transfer" ? "Confirm transfer" : "Submit for approval"}
             </Button>
           </div>
         }
       >
         <div className="space-y-3 text-sm text-[var(--text-secondary)]">
+          {formError && <p className="text-[var(--danger)]">{formError}</p>}
           {tab === "transfer" ? (
             <>
-              <p>Choose outlet, products and quantities. Source stock is reserved before dispatch.</p>
-              {["Destination outlet", "SKU", "Quantity"].map((f) => (
-                <div key={f}>
-                  <label className="mb-1 block text-xs text-[var(--text-muted)]">
-                    {f}
-                  </label>
-                  <input className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3" />
-                </div>
-              ))}
+              <p>Stock leaves Dhaka DC and shows in transit at the branch until it is received.</p>
+              <label className="block text-xs text-[var(--text-muted)]">
+                Destination
+                <select
+                  value={toStoreId}
+                  onChange={(e) => setToStoreId(e.target.value)}
+                  className="mt-1 h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3 text-sm"
+                >
+                  {stores.map((store) => (
+                    <option key={store.id} value={store.id}>
+                      {store.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-xs text-[var(--text-muted)]">
+                SKU
+                <input value={sku} onChange={(e) => setSku(e.target.value)} className="mt-1 h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3" />
+              </label>
+              <label className="block text-xs text-[var(--text-muted)]">
+                Quantity
+                <input value={qty} onChange={(e) => setQty(e.target.value)} className="mt-1 h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3" />
+              </label>
             </>
           ) : (
             <>
-              <p>Reason: damage, recount or return. Large changes need manager approval.</p>
-              {["SKU", "Quantity change", "Reason"].map((f) => (
-                <div key={f}>
-                  <label className="mb-1 block text-xs text-[var(--text-muted)]">
-                    {f}
-                  </label>
-                  <input className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3" />
-                </div>
-              ))}
+              <p>This opens an approval. Stock does not change until an owner or inventory manager approves it.</p>
+              <label className="block text-xs text-[var(--text-muted)]">
+                SKU
+                <input value={sku} onChange={(e) => setSku(e.target.value)} className="mt-1 h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3" />
+              </label>
+              <label className="block text-xs text-[var(--text-muted)]">
+                Quantity change
+                <input value={qty} onChange={(e) => setQty(e.target.value)} className="mt-1 h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3" />
+              </label>
+              <label className="block text-xs text-[var(--text-muted)]">
+                Reason
+                <input value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3" />
+              </label>
             </>
           )}
         </div>

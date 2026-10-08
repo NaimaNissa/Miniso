@@ -1,12 +1,16 @@
+"use client";
+
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { SurfaceCard } from "@/components/ui/glass-card";
 import { Pill } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
-import { stores } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { formatCurrency } from "@/lib/utils";
 
 export default function StoresPage() {
+  const { stores, ready } = useRetail();
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
   return (
     <div className="animate-fade-in">
       <PageHeader

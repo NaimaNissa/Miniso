@@ -163,6 +163,15 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+.surface,
+.glass,
+.glass-strong {
+  transition:
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

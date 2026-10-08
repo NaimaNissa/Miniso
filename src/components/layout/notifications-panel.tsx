@@ -1,12 +1,13 @@
 "use client";
 
 import { useApp } from "@/components/providers";
-import { notifications } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { cn } from "@/lib/utils";
 
 export function NotificationsPanel() {
   const { notificationsOpen, setNotificationsOpen, sidebarCollapsed } =
     useApp();
+  const { notifications } = useRetail();
 
   if (!notificationsOpen) return null;
 

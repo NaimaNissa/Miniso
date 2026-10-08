@@ -7,16 +7,18 @@ import { GlassCard, SurfaceCard } from "@/components/ui/glass-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { SideDrawer } from "@/components/ui/side-drawer";
-import { inventoryRows } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 import { formatNumber } from "@/lib/utils";
 import { Download, Filter, Search, SlidersHorizontal } from "lucide-react";
 
 export default function InventoryPage() {
+  const { inventoryRows, ready } = useRetail();
   const [tab, setTab] = useState("stock");
   const [selected, setSelected] = useState<(typeof inventoryRows)[0] | null>(
     null
   );
   const [query, setQuery] = useState("");
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
 
   const filtered = inventoryRows.filter(
     (r) =>

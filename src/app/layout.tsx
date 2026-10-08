@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { Manrope, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { AuthProvider } from "@/components/auth-provider";
+import { StaffProvider } from "@/components/staff-provider";
+import { RetailProvider } from "@/components/retail-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
@@ -37,6 +39,8 @@ export default function RootLayout({
       <body className="min-h-full font-sans" suppressHydrationWarning>
         <Providers>
           <AuthProvider>
+            <StaffProvider>
+              <RetailProvider>
             <Suspense
               fallback={
                 <div className="min-h-screen bg-[var(--background)]" />
@@ -44,6 +48,8 @@ export default function RootLayout({
             >
               <AppShell>{children}</AppShell>
             </Suspense>
+              </RetailProvider>
+            </StaffProvider>
           </AuthProvider>
         </Providers>
       </body>

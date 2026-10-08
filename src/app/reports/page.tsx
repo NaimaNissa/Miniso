@@ -1,9 +1,13 @@
+"use client";
+
 import { PageHeader } from "@/components/ui/page-header";
 import { GlassCard, SurfaceCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
-import { salesSparkline, inventorySparkline } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
 
 export default function ReportsPage() {
+  const { salesSparkline, inventorySparkline, ready } = useRetail();
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
   return (
     <div className="animate-fade-in">
       <PageHeader
@@ -20,7 +24,7 @@ export default function ReportsPage() {
         <SurfaceCard className="p-5">
           <h2 className="text-sm font-semibold">Sales trend (12 weeks)</h2>
           <div className="mt-6 flex h-40 items-end gap-1.5">
-            {salesSparkline.map((v, i) => {
+            {salesSparkline.length > 0 && salesSparkline.map((v, i) => {
               const max = Math.max(...salesSparkline);
               return (
                 <div
@@ -42,7 +46,7 @@ export default function ReportsPage() {
         <SurfaceCard className="p-5">
           <h2 className="text-sm font-semibold">Inventory availability %</h2>
           <div className="mt-6 flex h-40 items-end gap-1.5">
-            {inventorySparkline.map((v, i) => {
+            {inventorySparkline.length > 0 && inventorySparkline.map((v, i) => {
               const min = Math.min(...inventorySparkline) - 5;
               const max = Math.max(...inventorySparkline);
               const h = ((v - min) / (max - min)) * 100;

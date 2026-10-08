@@ -1,10 +1,15 @@
+"use client";
+
 import { PageHeader } from "@/components/ui/page-header";
 import { SurfaceCard, GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
-import { storeOperations } from "@/lib/data";
+import { useRetail } from "@/components/retail-provider";
+import { api } from "@/lib/api";
 import { Check, AlertTriangle, Circle } from "lucide-react";
 
 export default function OperationsPage() {
+  const { storeOperations, branchToday, ready, reload, token } = useRetail();
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
   const sections = [
     {
       title: "Opening",
@@ -27,7 +32,7 @@ export default function OperationsPage() {
     <div className="animate-fade-in">
       <PageHeader
         title="Store Operations"
-        description="Dhanmondi Store · daily workflow timeline"
+        description={`${branchToday.storeName} · daily workflow timeline`}
         actions={<Button size="sm">Start shift checklist</Button>}
       />
 
@@ -76,8 +81,15 @@ export default function OperationsPage() {
                       )}
                       {item.label}
                     </div>
-                    {!item.done && (
-                      <Button size="sm" variant="secondary">
+                    {!item.done && item.id && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          if (!token) return;
+                          void api.toggleOperation(token, item.id!).then(() => reload());
+                        }}
+                      >
                         Complete
                       </Button>
                     )}

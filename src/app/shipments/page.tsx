@@ -7,42 +7,24 @@ import { Pill } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { SideDrawer } from "@/components/ui/side-drawer";
 import { useAuth } from "@/components/auth-provider";
-
-const shipments = [
-  {
-    id: "SHP-2026-118",
-    origin: "Guangzhou, China",
-    invoice: "INV-CN-88421",
-    eta: "18 Oct 2026",
-    status: "In Transit",
-    items: 24,
-  },
-  {
-    id: "SHP-2026-109",
-    origin: "Osaka, Japan",
-    invoice: "INV-JP-2201",
-    eta: "12 Oct 2026",
-    status: "Receiving",
-    items: 16,
-  },
-  {
-    id: "SHP-2026-094",
-    origin: "Shenzhen, China",
-    invoice: "INV-CN-87110",
-    eta: "5 Oct 2026",
-    status: "Received",
-    items: 40,
-  },
-];
+import { useRetail } from "@/components/retail-provider";
+import { api } from "@/lib/api";
 
 export default function ShipmentsPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const { shipments, ready, reload } = useRetail();
   const canCreate = user?.role === "inventory_manager" || user?.role === "owner";
   const canReceive =
     user?.role === "warehouse_staff" ||
     user?.role === "inventory_manager" ||
     user?.role === "owner";
   const [open, setOpen] = useState(false);
+  const [origin, setOrigin] = useState("");
+  const [invoice, setInvoice] = useState("");
+  const [eta, setEta] = useState("");
+  if (!ready) return <div className="h-40 skeleton rounded-[var(--radius-lg)]" />;
+  const inTransit = shipments.filter((item) => item.status === "In Transit").length;
+  const receiving = shipments.filter((item) => item.status === "Receiving").length;
 
   return (
     <div className="animate-fade-in">
@@ -60,8 +42,8 @@ export default function ShipmentsPage() {
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         {[
-          { label: "In transit", value: "3" },
-          { label: "Receiving today", value: "1" },
+          { label: "In transit", value: String(inTransit) },
+          { label: "Receiving today", value: String(receiving) },
           { label: "Awaiting discrepancy review", value: "1" },
         ].map((k) => (
           <GlassCard key={k.label} className="p-4">
@@ -109,8 +91,15 @@ export default function ShipmentsPage() {
                     >
                       {s.status}
                     </Pill>
-                    {canReceive && s.status === "Receiving" && (
-                      <Button size="sm" variant="secondary">
+                    {canReceive && s.status !== "Received" && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          if (!token) return;
+                          void api.receiveShipment(token, s.id).then(() => reload());
+                        }}
+                      >
                         Receive
                       </Button>
                     )}
@@ -131,7 +120,18 @@ export default function ShipmentsPage() {
             <Button variant="outline" className="flex-1" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button className="flex-1" onClick={() => setOpen(false)}>
+            <Button
+              className="flex-1"
+              onClick={() => {
+                if (!token) return;
+                void api
+                  .createShipment(token, { origin, invoice, eta, items: 1 })
+                  .then(() => {
+                    setOpen(false);
+                    return reload();
+                  });
+              }}
+            >
               Save as In Transit
             </Button>
           </div>
@@ -143,17 +143,18 @@ export default function ShipmentsPage() {
             Items can be typed or uploaded from a packing list. Missing SKUs
             become draft products.
           </p>
-          {["Origin", "Invoice number", "ETA", "Entry method"].map((f) => (
-            <div key={f}>
-              <label className="mb-1 block text-xs text-[var(--text-muted)]">
-                {f}
-              </label>
-              <input
-                className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3 outline-none"
-                placeholder={f}
-              />
-            </div>
-          ))}
+          <label className="block text-xs text-[var(--text-muted)]">
+            Origin
+            <input value={origin} onChange={(e) => setOrigin(e.target.value)} className="mt-1 h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3 text-sm outline-none" />
+          </label>
+          <label className="block text-xs text-[var(--text-muted)]">
+            Invoice
+            <input value={invoice} onChange={(e) => setInvoice(e.target.value)} className="mt-1 h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3 text-sm outline-none" />
+          </label>
+          <label className="block text-xs text-[var(--text-muted)]">
+            ETA
+            <input value={eta} onChange={(e) => setEta(e.target.value)} className="mt-1 h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--background-elevated)] px-3 text-sm outline-none" />
+          </label>
         </div>
       </SideDrawer>
     </div>

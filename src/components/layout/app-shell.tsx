@@ -9,14 +9,17 @@ import { Topbar } from "./topbar";
 import { CommandPalette } from "./command-palette";
 import { NotificationsPanel } from "./notifications-panel";
 import { AIAssistant } from "./ai-assistant";
+import { isAuthPage } from "@/lib/auth";
+import { useRetail } from "@/components/retail-provider";
 import { usePathname } from "next/navigation";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { sidebarCollapsed } = useApp();
   const pathname = usePathname() ?? "";
   const mounted = useMounted();
-  const isLogin = pathname === "/login";
+  const isLogin = isAuthPage(pathname);
   const isPOS = pathname.startsWith("/pos");
+  const { error: dataError } = useRetail();
 
   // SSR + first client paint: same minimal tree (avoids React #418).
   if (!mounted) {
@@ -43,12 +46,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <main
             className={cn(
               "min-h-screen pt-[var(--topbar-height)] transition-all duration-200",
+              "pl-0",
               sidebarCollapsed
-                ? "pl-[72px]"
-                : "pl-0 lg:pl-[var(--sidebar-width)]"
+                ? "lg:pl-[72px]"
+                : "lg:pl-[var(--sidebar-width)]"
             )}
           >
-            <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1440px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-7">
+              {dataError && (
+                <p className="mb-4 rounded-[var(--radius-md)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
+                  {dataError}
+                </p>
+              )}
               {children}
             </div>
           </main>

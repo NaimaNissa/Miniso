@@ -19,6 +19,11 @@ import {
   Search,
   ArrowLeftRight,
   Map,
+  Wallet,
+  Clock,
+  CalendarDays,
+  ListChecks,
+  CalendarOff,
 } from "lucide-react";
 
 export type RoleId =
@@ -26,7 +31,8 @@ export type RoleId =
   | "inventory_manager"
   | "warehouse_staff"
   | "store_manager"
-  | "social_media";
+  | "social_media"
+  | "staff";
 
 export type ModuleId =
   | "owner_dashboard"
@@ -50,7 +56,13 @@ export type ModuleId =
   | "approvals"
   | "ai"
   | "reports"
-  | "insights";
+  | "insights"
+  | "staff_today"
+  | "staff_schedule"
+  | "staff_tasks"
+  | "staff_team"
+  | "staff_payroll"
+  | "staff_leave";
 
 export type NavItem = {
   label: string;
@@ -82,6 +94,7 @@ export type DemoUser = {
   role: RoleId;
   title: string;
   workspace: string;
+  branchId?: string;
 };
 
 export const roleMeta: Record<
@@ -132,6 +145,14 @@ export const roleMeta: Record<
       "Branch-linked agent: product lookup, offers, FAQs, chat handover. Cannot change stock.",
     home: "/social",
     color: "info",
+  },
+  staff: {
+    label: "Branch Staff",
+    shortLabel: "Staff",
+    description:
+      "Your shift, schedule, tasks, team, payroll, leave, and profile.",
+    home: "/staff",
+    color: "success",
   },
 };
 
@@ -290,9 +311,51 @@ export const allModules: ModuleDef[] = [
     href: "/reports",
     icon: BarChart3,
   },
+  {
+    id: "staff_today",
+    name: "Today",
+    description: "Clock in, break, and today’s shift",
+    href: "/staff",
+    icon: Clock,
+  },
+  {
+    id: "staff_schedule",
+    name: "Schedule",
+    description: "This week’s shifts and your day off",
+    href: "/staff/schedule",
+    icon: CalendarDays,
+  },
+  {
+    id: "staff_tasks",
+    name: "Tasks",
+    description: "Floor checklist to stay on track",
+    href: "/staff/tasks",
+    icon: ListChecks,
+  },
+  {
+    id: "staff_team",
+    name: "My team",
+    description: "Who is on the floor at your branch",
+    href: "/staff/team",
+    icon: Users,
+  },
+  {
+    id: "staff_payroll",
+    name: "Payroll",
+    description: "Estimated pay, hours, and payday",
+    href: "/staff/payroll",
+    icon: Wallet,
+  },
+  {
+    id: "staff_leave",
+    name: "Leave",
+    description: "Balances and requests for your manager",
+    href: "/staff/leave",
+    icon: CalendarOff,
+  },
 ];
 
-/** Modules each role can access */
+/** Modules each role can access. Profile lives in the topbar dropdown, not here. */
 export const roleModules: Record<RoleId, ModuleId[]> = {
   owner: [
     "owner_dashboard",
@@ -327,6 +390,7 @@ export const roleModules: Record<RoleId, ModuleId[]> = {
     "procurement",
     "transfers",
     "supply",
+    "workforce",
     "approvals",
     "ai",
     "reports",
@@ -360,6 +424,14 @@ export const roleModules: Record<RoleId, ModuleId[]> = {
     "products",
     "promotions",
     "customers",
+  ],
+  staff: [
+    "staff_today",
+    "staff_schedule",
+    "staff_tasks",
+    "staff_team",
+    "staff_payroll",
+    "staff_leave",
   ],
 };
 
@@ -401,8 +473,42 @@ export const demoUsers: DemoUser[] = [
     name: "Nusrat Jahan",
     initials: "NJ",
     role: "store_manager",
-    title: "Store Manager",
+    title: "Branch Manager",
     workspace: "Dhanmondi Store",
+    branchId: "MIN-BD-DHK-014",
+  },
+  {
+    id: "u-store-gulshan",
+    email: "gulshan@miniso.bd",
+    password: "store123",
+    name: "Rahim Khan",
+    initials: "RH",
+    role: "store_manager",
+    title: "Branch Manager",
+    workspace: "Gulshan Store",
+    branchId: "MIN-BD-DHK-008",
+  },
+  {
+    id: "u-store-uttara",
+    email: "uttara@miniso.bd",
+    password: "store123",
+    name: "Farhana Akter",
+    initials: "FA",
+    role: "store_manager",
+    title: "Branch Manager",
+    workspace: "Uttara Store",
+    branchId: "MIN-BD-DHK-021",
+  },
+  {
+    id: "u-store-ctg",
+    email: "ctg@miniso.bd",
+    password: "store123",
+    name: "Imran Hossain",
+    initials: "IH",
+    role: "store_manager",
+    title: "Branch Manager",
+    workspace: "Chittagong Agrabad",
+    branchId: "MIN-BD-CTG-003",
   },
   {
     id: "u-social",
@@ -412,9 +518,41 @@ export const demoUsers: DemoUser[] = [
     initials: "TA",
     role: "social_media",
     title: "Social Media Lead",
-    workspace: "Customer Care",
+    workspace: "Dhanmondi Store",
+    branchId: "MIN-BD-DHK-014",
+  },
+  {
+    id: "st-rafi",
+    email: "staff@miniso.bd",
+    password: "staff123",
+    name: "Rafi Islam",
+    initials: "RI",
+    role: "staff",
+    title: "Cashier",
+    workspace: "Dhanmondi Store",
+    branchId: "MIN-BD-DHK-014",
   },
 ];
+
+/** Login page grouping — HQ vs branch managers vs floor. */
+export function demoUsersByLane(): { label: string; users: DemoUser[] }[] {
+  return [
+    {
+      label: "Headquarters",
+      users: demoUsers.filter((u) =>
+        ["owner", "inventory_manager", "warehouse_staff"].includes(u.role)
+      ),
+    },
+    {
+      label: "Branch managers",
+      users: demoUsers.filter((u) => u.role === "store_manager"),
+    },
+    {
+      label: "Floor & social",
+      users: demoUsers.filter((u) => u.role === "staff" || u.role === "social_media"),
+    },
+  ];
+}
 
 export function getModulesForRole(role: RoleId): ModuleDef[] {
   const ids = new Set(roleModules[role]);
@@ -470,6 +608,7 @@ export function getNavForRole(role: RoleId): NavGroup[] {
         label: "Manage",
         items: [
           navItem("Approvals", "/approvals", CheckSquare, "approvals", 8),
+          navItem("People", "/workforce", UsersRound, "workforce"),
           navItem("Customers", "/customers", Users, "customers"),
           navItem("Social", "/social", MessageSquare, "social_inbox", 2),
           navItem("Insights", "/insights", BarChart3, "insights"),
@@ -500,6 +639,7 @@ export function getNavForRole(role: RoleId): NavGroup[] {
         label: "Manage",
         items: [
           navItem("Approvals", "/approvals", CheckSquare, "approvals", 8),
+          navItem("People", "/workforce", UsersRound, "workforce"),
           navItem("Insights", "/insights", BarChart3, "insights"),
         ],
       },
@@ -535,7 +675,7 @@ export function getNavForRole(role: RoleId): NavGroup[] {
         items: [
           navItem("POS", "/pos", ShoppingCart, "pos"),
           navItem("Operations", "/operations", ClipboardList, "operations"),
-          navItem("Staff", "/workforce", UsersRound, "workforce"),
+          navItem("My team", "/workforce", UsersRound, "workforce"),
         ],
       },
       {
@@ -574,6 +714,27 @@ export function getNavForRole(role: RoleId): NavGroup[] {
         ],
       },
     ],
+    staff: [
+      {
+        label: "",
+        items: [navItem("Today", "/staff", Clock, "staff_today")],
+      },
+      {
+        label: "Work",
+        items: [
+          navItem("Schedule", "/staff/schedule", CalendarDays, "staff_schedule"),
+          navItem("Tasks", "/staff/tasks", ListChecks, "staff_tasks"),
+          navItem("My team", "/staff/team", Users, "staff_team"),
+        ],
+      },
+      {
+        label: "Pay",
+        items: [
+          navItem("Payroll", "/staff/payroll", Wallet, "staff_payroll"),
+          navItem("Leave", "/staff/leave", CalendarOff, "staff_leave"),
+        ],
+      },
+    ],
   };
 
   return menus[role];
@@ -581,7 +742,13 @@ export function getNavForRole(role: RoleId): NavGroup[] {
 
 /** Map a path to a module for access checks */
 export function moduleForPath(pathname: string): ModuleId | null {
-  if (pathname === "/home" || pathname === "/login" || pathname === "/") {
+  if (
+    pathname === "/home" ||
+    pathname === "/login" ||
+    pathname === "/" ||
+    pathname.startsWith("/staff/signup") ||
+    pathname.startsWith("/invite/")
+  ) {
     return null;
   }
   if (pathname.startsWith("/dashboard/owner")) return "owner_dashboard";
@@ -607,14 +774,19 @@ export function moduleForPath(pathname: string): ModuleId | null {
   if (pathname.startsWith("/ai")) return "ai";
   if (pathname.startsWith("/reports")) return "reports";
   if (pathname.startsWith("/insights")) return "insights";
+  if (pathname.startsWith("/staff/schedule")) return "staff_schedule";
+  if (pathname.startsWith("/staff/tasks")) return "staff_tasks";
+  if (pathname.startsWith("/staff/team")) return "staff_team";
+  if (pathname.startsWith("/staff/payroll")) return "staff_payroll";
+  if (pathname.startsWith("/staff/leave")) return "staff_leave";
+  if (pathname.startsWith("/staff")) return "staff_today";
   return null;
 }
 
-export function findUser(email: string, password: string): DemoUser | null {
-  const normalized = email.trim().toLowerCase();
+export function isAuthPage(pathname: string) {
   return (
-    demoUsers.find(
-      (u) => u.email === normalized && u.password === password
-    ) ?? null
+    pathname === "/login" ||
+    pathname.startsWith("/staff/signup") ||
+    pathname.startsWith("/invite/")
   );
 }
